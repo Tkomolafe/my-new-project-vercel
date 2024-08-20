@@ -1,25 +1,59 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import AgeEstimator from './AgeEstimator';
+import LoginForm from './LoginForm';
+import SignupForm from './SignupForm';
+import UploadOptions from './UploadOptions';
+import NextPage from './NextPage';
 
-function App() {
+const App = () => {
+  const [currentPage, setCurrentPage] = useState('ageEstimator');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [age, setAge] = useState(null);
+  const [confidence, setConfidence] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleImageSelect = (imageData) => {
+    setSelectedImage(imageData);
+    setCurrentPage('nextPage');
+  };
+
+  const handleEstimateAge = async () => {
+    setLoading(true);
+
+    try {
+      const response = await fetch('/estimate-age', { // Use relative URL if proxy is set up
+        method: 'POST',
+        body: selectedImage, // Assuming selectedImage is a FormData object
+      });
+      const result = await response.json();
+      setAge(result.age);
+      setConfidence(result.confidence);
+    } catch (error) {
+      console.error('Error estimating age:', error);
+      setAge('Error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      {currentPage === 'ageEstimator' && <AgeEstimator onNavigate={setCurrentPage} />}
+      {currentPage === 'loginForm' && <LoginForm onNavigate={setCurrentPage} />}
+      {currentPage === 'signupForm' && <SignupForm onNavigate={setCurrentPage} />}
+      {currentPage === 'uploadOptions' && <UploadOptions onImageSelect={handleImageSelect} />}
+      {currentPage === 'nextPage' && (
+        <NextPage
+          selectedImage={selectedImage}
+          setCurrentPage={setCurrentPage}
+          handleEstimateAge={handleEstimateAge}
+          age={age}
+          confidence={confidence}
+          loading={loading}
+        />
+      )}
     </div>
   );
-}
+};
 
 export default App;
