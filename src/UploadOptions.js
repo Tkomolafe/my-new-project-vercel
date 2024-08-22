@@ -1,22 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { FaCamera, FaImages } from 'react-icons/fa';
-import * as faceapi from 'face-api.js';
+import React from 'react';
+import { FaCamera, FaImages } from 'react-icons/fa'; // Import icons for better visuals
 
 const UploadOptions = ({ onImageSelect }) => {
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Load face-api.js models
-    const loadModels = async () => {
-      const MODEL_URL = '/models';
-      await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-    };
-
-    loadModels();
-  }, []);
-
   const handleTakePicture = () => {
     document.getElementById('cameraInput').click();
   };
@@ -25,47 +10,12 @@ const UploadOptions = ({ onImageSelect }) => {
     document.getElementById('galleryInput').click();
   };
 
-  const handleImageChange = async (e) => {
+  const handleImageChange = (e) => {
     if (e.target.files.length > 0) {
-      setLoading(true); // Start loading indicator
       const file = e.target.files[0];
       const reader = new FileReader();
-
-      reader.onloadend = async () => {
-        const image = new Image();
-        image.src = reader.result;
-
-        image.onload = async () => {
-          const detections = await faceapi.detectSingleFace(image);
-          setLoading(false); // Stop loading indicator
-
-          if (detections) {
-            const { box } = detections;
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = box.width;
-            canvas.height = box.height;
-
-            // Draw only the face on the canvas
-            ctx.drawImage(
-              image,
-              box.x,
-              box.y,
-              box.width,
-              box.height,
-              0,
-              0,
-              box.width,
-              box.height
-            );
-
-            // Convert the canvas to a Data URL
-            const faceImageUrl = canvas.toDataURL();
-            onImageSelect(faceImageUrl);
-          } else {
-            alert('No face detected. Please try again with a different image.');
-          }
-        };
+      reader.onloadend = () => {
+        onImageSelect(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -74,7 +24,6 @@ const UploadOptions = ({ onImageSelect }) => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        {loading && <div style={styles.loading}>Processing...</div>} {/* Loading indicator */}
         <input
           type="file"
           accept="image/*"
@@ -150,11 +99,6 @@ const styles = {
   },
   icon: {
     marginRight: '10px',
-  },
-  loading: {
-    marginBottom: '15px',
-    fontSize: '18px',
-    color: '#28a745',
   },
 };
 
