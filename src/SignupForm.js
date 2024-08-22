@@ -1,71 +1,67 @@
 import React, { useState } from 'react';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './firebase';
 
 const SignupForm = ({ onNavigate }) => {
-  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [message, setMessage] = useState(''); // For success/error messages
+  const [loading, setLoading] = useState(false); // For loading state
 
-  const handleSignIn = () => {
-    if (onNavigate) {
-      onNavigate('loginForm');
-    } else {
-      console.error('onNavigate is not defined');
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    if (!termsAccepted) {
+      setMessage('You must accept the terms and conditions.');
+      return;
     }
-  };
 
-  const openModal = () => {
-    setModalIsOpen(true);
-  };
+    setLoading(true);
+    setMessage('');
 
-  const closeModal = () => {
-    setModalIsOpen(false);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      setMessage('Signup successful! Redirecting...');
+      setTimeout(() => onNavigate('uploadOptions'), 2000); // Redirect after 2 seconds
+    } catch (error) {
+      console.error('Error signing up:', error.message);
+      setMessage('Signup failed: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCheckboxChange = (event) => {
     setTermsAccepted(event.target.checked);
-    if (!event.target.checked) {
-      openModal();
-    }
   };
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.header}>AGE ESTIMATOR</h1>
-      <form style={styles.form}>
+      <h1 style={styles.header}>SIGN UP</h1>
+      <form style={styles.form} onSubmit={handleSignUp}>
         <div style={styles.inputGroup}>
-          <label style={styles.label} htmlFor="username">
-            Username
-          </label>
-          <input
-            style={styles.input}
-            type="text"
-            id="username"
-            name="username"
-            placeholder="Username"
-          />
-        </div>
-        <div style={styles.inputGroup}>
-          <label style={styles.label} htmlFor="email">
-            Email
-          </label>
+          <label style={styles.label} htmlFor="email">Email</label>
           <input
             style={styles.input}
             type="email"
             id="email"
-            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
+            required
           />
         </div>
         <div style={styles.inputGroup}>
-          <label style={styles.label} htmlFor="password">
-            Password
-          </label>
+          <label style={styles.label} htmlFor="password">Password</label>
           <div style={styles.passwordContainer}>
             <input
               style={styles.input}
               type="password"
               id="password"
-              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
+              required
             />
             <span style={styles.eyeIcon}>👁️</span>
           </div>
@@ -82,22 +78,14 @@ const SignupForm = ({ onNavigate }) => {
             <strong style={styles.underlineText}>I accept the terms & conditions</strong>
           </label>
         </div>
-        <button type="submit" style={styles.button} disabled={!termsAccepted}>SIGN UP</button>
+        {message && <p style={styles.messageText}>{message}</p>}
+        <button type="submit" style={styles.button} disabled={!termsAccepted || loading}>
+          {loading ? 'Signing Up...' : 'SIGN UP'}
+        </button>
       </form>
       <p style={styles.signupText}>
-        Own an Account? <span style={styles.signupLink} onClick={handleSignIn}>SIGN IN</span>
+        Own an Account? <span style={styles.signupLink} onClick={() => onNavigate('loginForm')}>SIGN IN</span>
       </p>
-
-      {/* Custom Modal */}
-      {modalIsOpen && (
-        <div style={modalStyles.overlay}>
-          <div style={modalStyles.content}>
-            <h2>Terms and Conditions</h2>
-            <p>Welcome to Age Estimator. These Terms and Conditions govern your use of our website and services. By accessing or using our services, you agree to be bound by these terms. If you do not agree with any part of these terms, please do not use our services. We collect personal information such as your username, email address, and password when you register for an account. This information is used to create and manage your account, and to communicate with you about our services. We also collect information about your interactions with our services, including your IP address, browser type, and access times, to improve our services and understand how users interact with our website. We implement reasonable security measures to protect your personal information from unauthorized access, alteration, or disclosure, but cannot guarantee absolute security. We do not sell, trade, or otherwise transfer your personal information to outside parties except as required by law or necessary to provide our services. We may share your data with third-party service providers who assist us in operating our website or conducting our business, provided they agree to keep this information confidential. You have the right to access, correct, or delete your personal information, and to restrict or object to the processing of your data. To exercise these rights, please contact us at [Your Contact Information]. We may update these Terms and Conditions from time to time, and any changes will be posted on this page with an updated revision date. Your continued use of our services after any modifications constitutes your acceptance of the new terms. If you have any questions or concerns about these Terms and Conditions or our data practices, please contact us at [Your Contact Information]. By checking the box, you confirm that you have read, understood, and agree to these Terms and Conditions. Thank you for using Age Estimator.</p>
-            <button onClick={closeModal} style={styles.button}>Close</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -203,11 +191,13 @@ const styles = {
     height: '100%',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  messageText: {
+    color: 'black',
+    marginBottom: '10px',
+    textAlign: 'center',
+  },
 };
 
-const modalStyles = {
-  overlay: styles.modalOverlay,
-  content: styles.modal,
-};
+
 
 export default SignupForm;

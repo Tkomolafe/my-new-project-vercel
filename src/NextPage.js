@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FaRedo, FaCheckCircle } from 'react-icons/fa'; // Icons for better visuals
 
 const NextPage = ({ selectedImage, setCurrentPage }) => {
   const [age, setAge] = useState(null);
@@ -17,7 +18,7 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
       formData.append('image', blob, 'image.jpg');
 
       // Send the image to the backend for age estimation
-      const res = await fetch('/estimate-age', {
+      const res = await fetch('/predict', {
         method: 'POST',
         body: formData,
       });
@@ -27,7 +28,7 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
       }
 
       const data = await res.json();
-      setAge(data.age);
+      setAge(data.estimated_age);
     } catch (error) {
       console.error('Error estimating age:', error);
       setAge('Error occurred');
@@ -44,8 +45,13 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
         </div>
       )}
       <div style={styles.buttonsContainer}>
-        <button style={styles.switchButton} onClick={() => setCurrentPage('uploadOptions')}>
-          UPLOAD AGAIN
+        <button
+          style={styles.switchButton}
+          onClick={() => setCurrentPage('uploadOptions')}
+          aria-label="Upload Again"
+        >
+          <FaRedo style={styles.icon} />
+          Upload Again
         </button>
         <button
           style={{
@@ -54,12 +60,14 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
           }}
           onClick={handleEstimateAge}
           disabled={loading}
+          aria-label={loading ? 'Estimating Age' : 'Proceed to Age Estimation'}
         >
-          {loading ? 'Estimating Age...' : 'PROCEED TO AGE ESTIMATION'}
+          {loading ? 'Estimating Age...' : 'Proceed to Age Estimation'}
         </button>
       </div>
       {age !== null && !loading && (
         <div style={styles.resultContainer}>
+          <FaCheckCircle style={styles.resultIcon} />
           <p>Estimated Age: {age}</p>
         </div>
       )}
@@ -75,6 +83,8 @@ const styles = {
     justifyContent: 'center',
     height: '100vh',
     backgroundColor: '#f9f9f9',
+    padding: '20px',
+    boxSizing: 'border-box',
   },
   imageContainer: {
     marginBottom: '20px',
@@ -88,10 +98,13 @@ const styles = {
   },
   buttonsContainer: {
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column',
     gap: '20px',
+    alignItems: 'center',
   },
   switchButton: {
+    display: 'flex',
+    alignItems: 'center',
     padding: '12px 24px',
     fontSize: '16px',
     color: '#fff',
@@ -100,8 +113,11 @@ const styles = {
     borderRadius: '20px',
     cursor: 'pointer',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    transition: 'background-color 0.3s ease',
   },
   proceedButton: {
+    display: 'flex',
+    alignItems: 'center',
     padding: '12px 24px',
     fontSize: '16px',
     color: '#fff',
@@ -110,11 +126,21 @@ const styles = {
     borderRadius: '20px',
     cursor: 'pointer',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    transition: 'background-color 0.3s ease',
+  },
+  icon: {
+    marginRight: '10px',
   },
   resultContainer: {
     marginTop: '20px',
     fontSize: '18px',
     fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  resultIcon: {
+    color: '#28a745',
   },
 };
 
