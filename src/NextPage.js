@@ -18,7 +18,7 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
       formData.append('image', blob, 'image.jpg');
 
       // Send the image to the backend for age estimation
-      const res = await fetch('/predict', {
+      const res = await fetch('https://flask-app-twuv.onrender.com/predict', {
         method: 'POST',
         body: formData,
       });
