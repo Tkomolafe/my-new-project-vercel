@@ -1,24 +1,25 @@
 import React, { useState } from 'react';
-import { FaRedo, FaCheckCircle } from 'react-icons/fa'; // Icons for better visuals
+import { FaRedo, FaCheckCircle } from 'react-icons/fa';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const NextPage = ({ selectedImage, setCurrentPage }) => {
   const [age, setAge] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleEstimateAge = async () => {
     setLoading(true);
+    setError('');
 
     try {
-      // Convert the selected image URL to a Blob
+      // Convert base64 image to Blob
       const response = await fetch(selectedImage);
       const blob = await response.blob();
 
-      // Prepare form data with the image blob
       const formData = new FormData();
       formData.append('image', blob, 'image.jpg');
 
-      // Send the image to the backend for age estimation
-      const res = await fetch('https://flask-app-twuv.onrender.com/predict', {
+      const res = await fetch('/predict', {
         method: 'POST',
         body: formData,
       });
@@ -31,117 +32,62 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
       setAge(data.estimated_age);
     } catch (error) {
       console.error('Error estimating age:', error);
-      setAge('Error occurred');
+      setError('There was an issue estimating the age. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
+    <div className="d-flex flex-column align-items-center justify-content-center vh-100 bg-light p-4">
       {selectedImage && (
-        <div style={styles.imageContainer}>
-          <img src={selectedImage} alt="Selected" style={styles.image} />
+        <div className="mb-4">
+          <img
+            src={selectedImage}
+            alt="Selected"
+            className="img-thumbnail"
+            style={{ width: '200px', height: '200px', objectFit: 'cover' }}
+          />
         </div>
       )}
-      <div style={styles.buttonsContainer}>
+      <div className="d-flex flex-column gap-3 align-items-center">
         <button
-          style={styles.switchButton}
+          className="btn btn-info btn-lg d-flex align-items-center"
           onClick={() => setCurrentPage('uploadOptions')}
           aria-label="Upload Again"
         >
-          <FaRedo style={styles.icon} />
+          <FaRedo className="me-2" />
           Upload Again
         </button>
         <button
-          style={{
-            ...styles.proceedButton,
-            opacity: loading ? 0.7 : 1,
-          }}
+          className="btn btn-success btn-lg d-flex align-items-center"
           onClick={handleEstimateAge}
           disabled={loading}
           aria-label={loading ? 'Estimating Age' : 'Proceed to Age Estimation'}
         >
-          {loading ? 'Estimating Age...' : 'Proceed to Age Estimation'}
+          {loading ? (
+            <span>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Estimating Age...
+            </span>
+          ) : (
+            'Proceed to Age Estimation'
+          )}
         </button>
       </div>
-      {age !== null && !loading && (
-        <div style={styles.resultContainer}>
-          <FaCheckCircle style={styles.resultIcon} />
-          <p>Estimated Age: {age}</p>
+      {age !== null && !loading && !error && (
+        <div className="mt-4 d-flex align-items-center justify-content-center gap-2 fs-4 fw-bold">
+          <FaCheckCircle className="text-success" style={{ verticalAlign: 'middle' }} />
+          <p className="mb-0">Estimated Age: {age}</p>
+        </div>
+      )}
+      {error && (
+        <div className="mt-4 alert alert-danger" role="alert">
+          {error}
         </div>
       )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    backgroundColor: '#f9f9f9',
-    padding: '20px',
-    boxSizing: 'border-box',
-  },
-  imageContainer: {
-    marginBottom: '20px',
-  },
-  image: {
-    width: '200px',
-    height: '200px',
-    borderRadius: '10px',
-    objectFit: 'cover',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  },
-  buttonsContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-    alignItems: 'center',
-  },
-  switchButton: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '12px 24px',
-    fontSize: '16px',
-    color: '#fff',
-    backgroundColor: '#17a2b8',
-    border: 'none',
-    borderRadius: '20px',
-    cursor: 'pointer',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    transition: 'background-color 0.3s ease',
-  },
-  proceedButton: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '12px 24px',
-    fontSize: '16px',
-    color: '#fff',
-    backgroundColor: '#28a745',
-    border: 'none',
-    borderRadius: '20px',
-    cursor: 'pointer',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    transition: 'background-color 0.3s ease',
-  },
-  icon: {
-    marginRight: '10px',
-  },
-  resultContainer: {
-    marginTop: '20px',
-    fontSize: '18px',
-    fontWeight: 'bold',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  },
-  resultIcon: {
-    color: '#28a745',
-  },
 };
 
 export default NextPage;

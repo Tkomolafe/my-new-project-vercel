@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebase';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const SignupForm = ({ onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [message, setMessage] = useState(''); // For success/error messages
-  const [loading, setLoading] = useState(false); // For loading state
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -22,10 +25,16 @@ const SignupForm = ({ onNavigate }) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       setMessage('Signup successful! Redirecting...');
-      setTimeout(() => onNavigate('uploadOptions'), 2000); // Redirect after 2 seconds
+      setTimeout(() => onNavigate('uploadOptions'), 2000);
     } catch (error) {
       console.error('Error signing up:', error.message);
-      setMessage('Signup failed: ' + error.message);
+      if (error.code === 'auth/email-already-in-use') {
+        setMessage('This email is already in use. Please use a different email.');
+      } else if (error.code === 'auth/weak-password') {
+        setMessage('Password is too weak. Please choose a stronger password.');
+      } else {
+        setMessage('Signup failed: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -35,169 +44,78 @@ const SignupForm = ({ onNavigate }) => {
     setTermsAccepted(event.target.checked);
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <div style={styles.container}>
-      <h1 style={styles.header}>SIGN UP</h1>
-      <form style={styles.form} onSubmit={handleSignUp}>
-        <div style={styles.inputGroup}>
-          <label style={styles.label} htmlFor="email">Email</label>
+    <div className="container d-flex flex-column align-items-center justify-content-center vh-100">
+      <h1 className="text-success fw-bold mb-4">Welcome to Our Platform!</h1>
+      <p className="text-muted mb-4">Join us today to experience all the amazing features.</p>
+      <form className="w-100" onSubmit={handleSignUp} style={{ maxWidth: '400px' }}>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="email">Email</label>
           <input
-            style={styles.input}
+            className="form-control"
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder="Enter your email"
             required
+            aria-label="Email"
           />
         </div>
-        <div style={styles.inputGroup}>
-          <label style={styles.label} htmlFor="password">Password</label>
-          <div style={styles.passwordContainer}>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="password">Password</label>
+          <div className="input-group">
             <input
-              style={styles.input}
-              type="password"
+              className="form-control"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="Create a password"
               required
+              aria-label="Password"
             />
-            <span style={styles.eyeIcon}>👁️</span>
+            <span className="input-group-text" onClick={togglePasswordVisibility} style={{ cursor: 'pointer' }}>
+              {showPassword ? <FaEyeSlash title="Hide Password" /> : <FaEye title="Show Password" />}
+            </span>
+          </div>
+          <div className="text-muted small mt-2">
+            Password strength: {/* Add your password strength meter here */}
           </div>
         </div>
-        <div style={styles.rememberMeContainer}>
+        <div className="form-check mb-3">
           <input
             type="checkbox"
+            className="form-check-input"
             id="terms"
-            name="terms"
-            style={styles.checkbox}
             onChange={handleCheckboxChange}
+            aria-label="Accept Terms and Conditions"
           />
-          <label style={styles.rememberMeLabel} htmlFor="terms">
-            <strong style={styles.underlineText}>I accept the terms & conditions</strong>
+          <label className="form-check-label" htmlFor="terms">
+            I accept the <a href="#!" className="text-success" style={{ textDecoration: 'underline' }}>terms & conditions</a>
           </label>
         </div>
-        {message && <p style={styles.messageText}>{message}</p>}
-        <button type="submit" style={styles.button} disabled={!termsAccepted || loading}>
+        {message && <p className="text-danger text-center mb-3" aria-live="polite">{message}</p>}
+        <button
+          type="submit"
+          className="btn btn-success w-100"
+          disabled={!termsAccepted || loading}
+        >
           {loading ? 'Signing Up...' : 'SIGN UP'}
         </button>
       </form>
-      <p style={styles.signupText}>
-        Own an Account? <span style={styles.signupLink} onClick={() => onNavigate('loginForm')}>SIGN IN</span>
+      <p className="text-muted mt-3">
+        Already have an account?{' '}
+        <span className="text-success fw-bold" style={{ cursor: 'pointer' }} onClick={() => onNavigate('loginForm')}>
+          Sign In
+        </span>
       </p>
     </div>
   );
 };
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    backgroundColor: '#fff',
-  },
-  header: {
-    color: '#28a745',
-    fontSize: '20px',
-    fontWeight: 'bold',
-    marginBottom: '40px',
-  },
-  form: {
-    width: '300px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  inputGroup: {
-    width: '100%',
-    marginBottom: '20px',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '5px',
-    color: '#888',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '16px',
-  },
-  passwordContainer: {
-    position: 'relative',
-    width: '100%',
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: '10px',
-    top: '10px',
-    cursor: 'pointer',
-  },
-  rememberMeContainer: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '20px',
-  },
-  checkbox: {
-    marginRight: '10px',
-  },
-  rememberMeLabel: {
-    color: '#888',
-  },
-  underlineText: {
-    textDecoration: 'underline',
-  },
-  button: {
-    width: '100%',
-    padding: '12px',
-    fontSize: '16px',
-    color: '#fff',
-    backgroundColor: '#28a745',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  },
-  signupText: {
-    marginTop: '20px',
-    color: '#888',
-  },
-  signupLink: {
-    color: '#28a745',
-    cursor: 'pointer',
-  },
-  modal: {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    backgroundColor: '#fff',
-    borderRadius: '4px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    padding: '20px',
-    width: '80%',
-    maxWidth: '600px',
-  },
-  modalOverlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  messageText: {
-    color: 'black',
-    marginBottom: '10px',
-    textAlign: 'center',
-  },
-};
-
-
 
 export default SignupForm;

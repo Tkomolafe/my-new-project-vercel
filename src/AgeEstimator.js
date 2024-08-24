@@ -1,4 +1,5 @@
 import React from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const AgeEstimator = ({ onNavigate }) => {
   const handleGetStarted = () => {
@@ -10,60 +11,37 @@ const AgeEstimator = ({ onNavigate }) => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.circle}>
+    <div className="d-flex flex-column align-items-center justify-content-center vh-100 bg-success text-center">
+      <div 
+        className="rounded-circle overflow-hidden mb-3" 
+        style={{ width: '200px', height: '200px', animation: 'pulse 2s infinite' }} // Added animation
+      >
         <img
           src={`${process.env.PUBLIC_URL}/2112.png`}
           alt="Face"
-          style={styles.image}
+          className="img-fluid"
+          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
         />
       </div>
-      <p style={styles.text}>UPLOAD & ESTIMATE AGE...</p>
-      <button style={styles.button} onClick={handleGetStarted}>GET STARTED</button>
+      <p className="text-white fs-6 fw-bold mb-3 text-shadow-sm">
+        UPLOAD & ESTIMATE AGE...
+      </p>
+      <p className="text-white fs-6 mb-4" style={{ maxWidth: '300px' }}>
+       
+      </p>
+      <button 
+        className="btn btn-light text-success px-4 py-2 rounded-pill shadow mt-3" 
+        onClick={handleGetStarted}
+        style={{ transition: 'transform 0.2s' }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} 
+        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        aria-label="Get started with age estimation" // Added ARIA label
+      >
+        GET STARTED
+      </button>
     </div>
   );
 };
 
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    backgroundColor: '#28a745',
-    textAlign: 'center',
-  },
-  circle: {
-    width: '200px',
-    height: '200px',
-    borderRadius: '50%',
-    overflow: 'hidden',
-    marginBottom: '20px',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  text: {
-    color: '#fff',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    marginBottom: '20px',
-    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
-  },
-  button: {
-    marginTop: '20px',
-    padding: '12px 24px',
-    fontSize: '16px',
-    color: '#28a745',
-    backgroundColor: '#fff',
-    border: 'none',
-    borderRadius: '20px',
-    cursor: 'pointer',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-  },
-};
-
 export default AgeEstimator;
+

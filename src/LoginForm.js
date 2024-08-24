@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from './firebase';
-import { FaCheckCircle, FaSpinner } from 'react-icons/fa';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaCheckCircle, FaSpinner, FaEye, FaEyeSlash } from 'react-icons/fa';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const LoginForm = ({ onNavigate }) => {
   const [email, setEmail] = useState('');
@@ -12,7 +12,7 @@ const LoginForm = ({ onNavigate }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [isForgotPasswordMode, setIsForgotPasswordMode] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,9 +24,15 @@ const LoginForm = ({ onNavigate }) => {
       setMessage('Login successful! Redirecting...');
       setTimeout(() => {
         onNavigate('uploadOptions');
-      }, 2000); // Delay for 2 seconds before redirecting
+      }, 2000);
     } catch (error) {
-      setMessage('Login failed. Please check your credentials and try again.');
+      if (error.code === 'auth/wrong-password') {
+        setMessage('Incorrect password. Please try again.');
+      } else if (error.code === 'auth/user-not-found') {
+        setMessage('No account found with this email.');
+      } else {
+        setMessage('Login failed. Please check your credentials and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -39,7 +45,7 @@ const LoginForm = ({ onNavigate }) => {
     try {
       await sendPasswordResetEmail(auth, forgotPasswordEmail);
       setMessage('Password reset email sent. Check your inbox!');
-      setForgotPasswordEmail(''); // Clear the email input
+      setForgotPasswordEmail('');
     } catch (error) {
       setMessage('Error sending reset email. Please try again later.');
     } finally {
@@ -53,231 +59,118 @@ const LoginForm = ({ onNavigate }) => {
 
   const toggleForgotPasswordMode = () => {
     setIsForgotPasswordMode(!isForgotPasswordMode);
-    setMessage(''); // Clear message when toggling modes
+    setMessage('');
   };
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword); // Toggle password visibility
+    setShowPassword(!showPassword);
   };
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.header}>Login</h1>
+    <div className="container d-flex flex-column align-items-center justify-content-center vh-100 bg-white">
+      <h1 className="text-success mb-4">LOG IN</h1>
       {isForgotPasswordMode ? (
-        <div style={styles.forgotPasswordContainer}>
-          <h2 style={styles.header}>Forgot Password</h2>
+        <div className="w-100" style={{ maxWidth: '300px' }}>
+          <h2 className="text-success mb-3">Forgot Password</h2>
           <input
             type="email"
             value={forgotPasswordEmail}
             onChange={(e) => setForgotPasswordEmail(e.target.value)}
             placeholder="Enter your email"
-            style={styles.input}
+            className="form-control mb-3"
+            aria-label="Forgot Password Email"
           />
-          {message && <p style={styles.messageText}>{message}</p>}
+          {message && <p className="text-center text-black">{message}</p>}
           <button
             type="button"
-            style={{ ...styles.button, width: '100%' }}
+            className="btn btn-success w-100"
             onClick={handleForgotPassword}
             disabled={loading}
           >
             {loading ? (
               <>
-                Sending... <FaSpinner style={styles.spinner} />
+                Sending... <FaSpinner className="ms-2 spinner-border spinner-border-sm" />
               </>
             ) : (
               'Send Reset Email'
             )}
           </button>
-          <p style={styles.backToLogin} onClick={toggleForgotPasswordMode}>
+          <p className="text-success text-center mt-3" style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={toggleForgotPasswordMode}>
             Back to Login
           </p>
         </div>
       ) : (
-        <form style={styles.form} onSubmit={handleLogin}>
-          <div style={styles.inputGroup}>
-            <label style={styles.label} htmlFor="email">Email</label>
+        <form className="w-100" style={{ maxWidth: '300px' }} onSubmit={handleLogin}>
+          <div className="mb-3">
+            <label className="form-label" htmlFor="email">Email</label>
             <input
-              style={styles.input}
               type="email"
               id="email"
+              className="form-control"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               required
+              aria-label="Email"
             />
           </div>
-          <div style={styles.inputGroup}>
-            <label style={styles.label} htmlFor="password">Password</label>
-            <div style={styles.passwordContainer}>
+          <div className="mb-3">
+            <label className="form-label" htmlFor="password">Password</label>
+            <div className="input-group">
               <input
-                style={styles.input}
-                type={showPassword ? 'text' : 'password'} // Toggle between text and password
+                type={showPassword ? 'text' : 'password'}
                 id="password"
+                className="form-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 required
+                aria-label="Password"
               />
-              <span style={styles.eyeIcon} onClick={togglePasswordVisibility}>
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              <span className="input-group-text" onClick={togglePasswordVisibility} style={{ cursor: 'pointer' }}>
+                {showPassword ? <FaEyeSlash title="Hide Password" /> : <FaEye title="Show Password" />}
               </span>
             </div>
           </div>
-          <div style={styles.rememberMeContainer}>
+          <div className="form-check mb-3">
             <input
               type="checkbox"
               id="rememberMe"
-              style={styles.checkbox}
+              className="form-check-input"
               checked={rememberMe}
               onChange={() => setRememberMe(!rememberMe)}
+              aria-label="Remember Me"
             />
-            <label style={styles.rememberMeLabel} htmlFor="rememberMe">Remember Me</label>
+            <label className="form-check-label" htmlFor="rememberMe">Remember Me</label>
           </div>
           {message && (
-            <div style={styles.messageContainer}>
-              <FaCheckCircle style={styles.successIcon} />
-              <p style={styles.messageText}>{message}</p>
+            <div className={`alert ${message.includes('success') ? 'alert-success' : 'alert-danger'} d-flex align-items-center mb-3`}>
+              <FaCheckCircle className="me-2" />
+              <p className="m-0">{message}</p>
             </div>
           )}
-          <button type="submit" style={styles.button} disabled={loading}>
+          <button type="submit" className="btn btn-success w-100" disabled={loading}>
             {loading ? (
               <>
-                Logging In... <FaSpinner style={styles.spinner} />
+                Logging In... <FaSpinner className="ms-2 spinner-border spinner-border-sm" />
               </>
             ) : (
               'Log In'
             )}
           </button>
-          <p style={styles.forgotPassword} onClick={toggleForgotPasswordMode}>
+          <p className="text-success text-center mt-3" style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={toggleForgotPasswordMode}>
             Forgot Password?
           </p>
-          <p style={styles.signupText}>
-            No Account yet? <span style={styles.signupLink} onClick={handleSignUp}>Sign Up</span>
+          <p className="text-center mt-3">
+            No Account yet?{' '}
+            <span className="text-success" style={{ cursor: 'pointer', textDecoration: 'underline' }} onClick={handleSignUp}>
+              Sign Up
+            </span>
           </p>
         </form>
       )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    backgroundColor: '#fff',
-  },
-  header: {
-    color: '#28a745',
-    fontSize: '24px',
-    fontWeight: 'bold',
-    marginBottom: '40px',
-  },
-  form: {
-    width: '300px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  inputGroup: {
-    width: '100%',
-    marginBottom: '20px',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '5px',
-    color: '#888',
-  },
-  input: {
-    width: '100%',
-    padding: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '16px',
-  },
-  passwordContainer: {
-    position: 'relative',
-    width: '100%',
-  },
-  eyeIcon: {
-    position: 'absolute',
-    right: '10px',
-    top: '10px',
-    cursor: 'pointer',
-    color: '#888', // Style the eye icon
-  },
-  rememberMeContainer: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '20px',
-  },
-  checkbox: {
-    marginRight: '10px',
-  },
-  rememberMeLabel: {
-    color: '#888',
-  },
-  button: {
-    width: '100%',
-    padding: '12px',
-    fontSize: '16px',
-    color: '#fff',
-    backgroundColor: '#28a745',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  spinner: {
-    marginLeft: '10px',
-    fontSize: '18px',
-  },
-  signupText: {
-    marginTop: '20px',
-    color: '#888',
-  },
-  signupLink: {
-    color: '#28a745',
-    cursor: 'pointer',
-  },
-  messageContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '10px',
-  },
-  messageText: {
-    color: 'black',
-    textAlign: 'center',
-    flex: 1,
-  },
-  successIcon: {
-    color: '#28a745',
-  },
-  forgotPassword: {
-    color: '#28a745',
-    cursor: 'pointer',
-    marginTop: '10px',
-  },
-  forgotPasswordContainer: {
-    width: '300px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  backToLogin: {
-    color: '#28a745',
-    cursor: 'pointer',
-    marginTop: '10px',
-    fontWeight: 'bold',
-    textDecoration: 'underline',
-  },
 };
 
 export default LoginForm;
