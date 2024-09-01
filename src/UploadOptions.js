@@ -1,12 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FaCamera, FaImages } from 'react-icons/fa'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const UploadOptions = ({ onImageSelect }) => {
-  const [loading, setLoading] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const handleTakePicture = () => {
-    document.getElementById('cameraInput').click();
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      setIsCapturing(true);
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        })
+        .catch((err) => {
+          console.error("Error accessing webcam: ", err);
+        });
+    } else {
+      document.getElementById('cameraInput').click();
+    }
+  };
+
+  const handleCapture = () => {
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageDataURL = canvas.toDataURL('image/png');
+    onImageSelect(imageDataURL);
+
+    // Stop the video stream
+    const stream = video.srcObject;
+    const tracks = stream.getTracks();
+    tracks.forEach((track) => track.stop());
+    setIsCapturing(false);
   };
 
   const handleUploadFromGallery = () => {
@@ -15,12 +47,10 @@ const UploadOptions = ({ onImageSelect }) => {
 
   const handleImageChange = async (e) => {
     if (e.target.files.length > 0) {
-      setLoading(true);
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
         onImageSelect(reader.result);  // Send the base64 image to parent component
-        setLoading(false);
       };
       reader.readAsDataURL(file);
     }
@@ -47,31 +77,39 @@ const UploadOptions = ({ onImageSelect }) => {
           onChange={handleImageChange}
         />
         <div className="d-flex flex-column gap-3">
-          <button
-            className="btn btn-success btn-lg d-flex align-items-center justify-content-center"
-            onClick={handleTakePicture}
-            aria-label="Take a picture with your camera"
-            disabled={loading}
-          >
-            <FaCamera className="me-2" />
-            Take a Picture
-          </button>
-          <button
-            className="btn btn-success btn-lg d-flex align-items-center justify-content-center"
-            onClick={handleUploadFromGallery}
-            aria-label="Upload an image from your gallery"
-            disabled={loading}
-          >
-            <FaImages className="me-2" />
-            Upload from Gallery
-          </button>
+          {!isCapturing ? (
+            <>
+              <button
+                className="btn btn-success btn-lg d-flex align-items-center justify-content-center"
+                onClick={handleTakePicture}
+                aria-label="Take a picture with your camera"
+              >
+                <FaCamera className="me-2" />
+                Take a Picture
+              </button>
+              <button
+                className="btn btn-success btn-lg d-flex align-items-center justify-content-center"
+                onClick={handleUploadFromGallery}
+                aria-label="Upload an image from your gallery"
+              >
+                <FaImages className="me-2" />
+                Upload from Gallery
+              </button>
+            </>
+          ) : (
+            <div className="d-flex flex-column align-items-center">
+              <video ref={videoRef} style={{ width: '100%' }} />
+              <button
+                className="btn btn-danger btn-lg mt-3"
+                onClick={handleCapture}
+                aria-label="Capture photo from webcam"
+              >
+                Capture Photo
+              </button>
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+            </div>
+          )}
         </div>
-        {loading && (
-          <div className="mt-4 d-flex align-items-center justify-content-center gap-2 fs-4 fw-bold">
-            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Processing...
-          </div>
-        )}
       </div>
     </div>
   );

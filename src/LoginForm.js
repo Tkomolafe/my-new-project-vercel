@@ -68,7 +68,7 @@ const LoginForm = ({ onNavigate }) => {
 
   return (
     <div className="container d-flex flex-column align-items-center justify-content-center vh-100 bg-white">
-      <h1 className="text-success mb-4">LOG IN</h1>
+      <h1 className="text-success mb-4">WELCOME</h1>
       {isForgotPasswordMode ? (
         <div className="w-100" style={{ maxWidth: '300px' }}>
           <h2 className="text-success mb-3">Forgot Password</h2>

@@ -1,53 +1,70 @@
 import React, { useState } from 'react';
-import { FaRedo, FaCheckCircle } from 'react-icons/fa';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import CropModal from './CropModal';
+import { FaCrop } from 'react-icons/fa';
 
 const NextPage = ({ selectedImage, setCurrentPage }) => {
   const [age, setAge] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [displayImage, setDisplayImage] = useState(selectedImage);
 
-  const handleEstimateAge = async () => {
+ const handleEstimateAge = async () => {
     setLoading(true);
     setError('');
 
     try {
-      // Convert base64 image to Blob
-      const response = await fetch(selectedImage);
-      const blob = await response.blob();
+        const response = await fetch(displayImage);
+        if (!response.ok) {
+            throw new Error('Failed to fetch image');
+        }
 
-      const formData = new FormData();
-      formData.append('image', blob, 'image.jpg');
+        const blob = await response.blob();
+        const formData = new FormData();
+        formData.append('image', blob, 'image.jpg');
 
-      const res = await fetch('/predict', {
-        method: 'POST',
-        body: formData,
-      });
+        const res = await fetch('/predict', {
+            method: 'POST',
+            body: formData,
+        });
 
-      if (!res.ok) {
-        throw new Error('Failed to estimate age');
-      }
+        if (!res.ok) {
+            throw new Error('Failed to estimate age');
+        }
 
-      const data = await res.json();
-      setAge(data.estimated_age);
+        const data = await res.json();
+        setAge(data.estimated_age);
     } catch (error) {
-      console.error('Error estimating age:', error);
-      setError('There was an issue estimating the age. Please try again.');
+        console.error('Error estimating age:', error);
+        setError('There was an issue estimating the age. Please try again.');
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
+};
+
+  const handleCropComplete = (croppedImage) => {
+    setDisplayImage(croppedImage);
+    setShowCropModal(false);
   };
 
   return (
     <div className="d-flex flex-column align-items-center justify-content-center vh-100 bg-light p-4">
-      {selectedImage && (
-        <div className="mb-4">
+      {displayImage && (
+        <div className="mb-4 position-relative">
           <img
-            src={selectedImage}
+            src={displayImage}
             alt="Selected"
             className="img-thumbnail"
             style={{ width: '200px', height: '200px', objectFit: 'cover' }}
           />
+          <button
+            className="btn btn-outline-info position-absolute top-0 end-0"
+            onClick={() => setShowCropModal(true)}
+            aria-label="Crop Image"
+            style={{ transform: 'translate(50%, -50%)' }}
+          >
+            <FaCrop />
+          </button>
         </div>
       )}
       <div className="d-flex flex-column gap-3 align-items-center">
@@ -56,7 +73,6 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
           onClick={() => setCurrentPage('uploadOptions')}
           aria-label="Upload Again"
         >
-          <FaRedo className="me-2" />
           Upload Again
         </button>
         <button
@@ -77,7 +93,6 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
       </div>
       {age !== null && !loading && !error && (
         <div className="mt-4 d-flex align-items-center justify-content-center gap-2 fs-4 fw-bold">
-          <FaCheckCircle className="text-success" style={{ verticalAlign: 'middle' }} />
           <p className="mb-0">Estimated Age: {age}</p>
         </div>
       )}
@@ -85,6 +100,14 @@ const NextPage = ({ selectedImage, setCurrentPage }) => {
         <div className="mt-4 alert alert-danger" role="alert">
           {error}
         </div>
+      )}
+      {showCropModal && (
+        <CropModal
+          show={showCropModal}
+          handleClose={() => setShowCropModal(false)}
+          imageSrc={displayImage}
+          onCropComplete={handleCropComplete}
+        />
       )}
     </div>
   );
